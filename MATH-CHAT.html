@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maths 6ème - Les Chatons Calculateurs 🐱</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+background:linear-gradient(135deg,#a75870,#359ac2);
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+padding:20px;
+}
+
+.container{
+width:100%;
+max-width:900px;
+background:white;
+border-radius:25px;
+padding:25px;
+box-shadow:0 15px 35px rgba(0,0,0,0.15);
+}
+
+.header{
+text-align:center;
+margin-bottom:20px;
+}
+
+.header h1{
+color:#ff5a8a;
+font-size:2rem;
+}
+
+.kitten{
+font-size:60px;
+}
+
+.progress-container{
+background:#eee;
+height:22px;
+border-radius:20px;
+overflow:hidden;
+margin:15px 0;
+}
+
+.progress{
+height:100%;
+width:0%;
+background:linear-gradient(90deg,#ff90b3,#ff5a8a);
+transition:0.4s;
+}
+
+.info{
+display:flex;
+justify-content:space-between;
+margin-bottom:20px;
+font-weight:bold;
+}
+
+.question-box{
+background:#fff9fb;
+padding:25px;
+border-radius:20px;
+border:2px solid #ffd3e0;
+min-height:180px;
+}
+
+.question{
+font-size:1.4rem;
+margin-bottom:25px;
+line-height:1.5;
+}
+
+.answers{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:15px;
+}
+
+.answer{
+padding:15px;
+border:none;
+border-radius:15px;
+font-size:1rem;
+cursor:pointer;
+background:#f0f8ff;
+transition:0.3s;
+}
+
+.answer:hover{
+transform:scale(1.03);
+background:#dff6ff;
+}
+
+.correct{
+background:#8ef0a4 !important;
+}
+
+.wrong{
+background:#ff9e9e !important;
+}
+
+.next-btn{
+margin-top:20px;
+padding:12px 25px;
+border:none;
+border-radius:12px;
+background:#ff5a8a;
+color:white;
+font-size:1rem;
+cursor:pointer;
+display:none;
+}
+
+.result{
+display:none;
+}
+
+.result h2{
+color:#ff5a8a;
+margin-bottom:15px;
+}
+
+.score{
+font-size:2rem;
+margin:15px 0;
+}
+
+.card{
+padding:15px;
+margin:10px 0;
+background:#f6faff;
+border-radius:15px;
+}
+
+ul{
+padding-left:20px;
+}
+
+@media(max-width:700px){
+
+.answers{
+grid-template-columns:1fr;
+}
+
+.question{
+font-size:1.2rem;
+}
+
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="header">
+<div class="kitten">🐱</div>
+<h1>🏖️ 🍹 Les Chatons Calculateurs 🍹 🏖️</h1>
+</div>
+
+<div id="quiz">
+
+<div class="progress-container">
+<div class="progress" id="progress"></div>
+</div>
+
+<div class="info">
+<div id="counter"></div>
+<div id="scoreDisplay">Score : 0</div>
+</div>
+
+<div class="question-box">
+
+<div class="question" id="question"></div>
+
+<div class="answers" id="answers"></div>
+
+<button class="next-btn" id="nextBtn">
+Question suivante
+</button>
+
+</div>
+
+</div>
+
+<div id="result" class="result"></div>
+
+</div>
+
+<script>
+
+const TOTAL_QUESTIONS = 20;
+
+let current = 0;
+let score = 0;
+
+let questions = [];
+
+let errors = {
+addition:0,
+division:0,
+perimeter:0
+};
+
+function random(min,max){
+return Math.floor(Math.random()*(max-min+1))+min;
+}
+
+function shuffle(arr){
+return arr.sort(()=>Math.random()-0.5);
+}
+
+function uniqueChoices(correct, candidates){
+
+const set = new Set();
+set.add(correct);
+
+while(set.size < 4){
+
+const value = candidates[Math.floor(Math.random()*candidates.length)];
+
+if(value >= 0){
+set.add(value);
+}
+
+}
+
+return shuffle([...set]);
+}
+
+function additionQuestion(){
+
+const a = random(20,999);
+const b = random(20,999);
+
+const correct = a+b;
+
+const choices = uniqueChoices(correct,[
+correct+1,
+correct-1,
+correct+10,
+correct-10,
+correct+20,
+correct-20,
+correct+random(2,9),
+correct-random(2,9)
+]);
+
+return{
+type:"addition",
+question:`Calculer :<br><br><strong>${a} + ${b}</strong>`,
+correct,
+choices
+};
+}
+
+function divisionQuestion(){
+
+const divisor = random(2,12);
+const answer = random(2,12);
+
+const total = divisor * answer;
+
+const correct = answer;
+
+const choices = uniqueChoices(correct,[
+answer+1,
+answer-1,
+answer+2,
+answer-2,
+divisor,
+total/divisor+3,
+Math.floor(total/2)
+]);
+
+return{
+type:"division",
+question:`Paul possède ${total} billes.<br><br>
+Il veut les répartir équitablement dans ${divisor} sachets.<br><br>
+Combien y aura-t-il de billes dans chaque sachet ?`,
+correct,
+choices
+};
+}
+
+function perimeterQuestion(){
+
+const L = random(4,30);
+const l = random(2,20);
+
+const correct = 2*(L+l);
+
+const area = L*l;
+
+const choices = uniqueChoices(correct,[
+area,
+L+l,
+correct+4,
+correct-4,
+correct+2,
+correct-2
+]);
+
+return{
+type:"perimeter",
+question:`Quel est le périmètre d'un rectangle de longueur ${L} cm et de largeur ${l} cm ?`,
+correct,
+choices
+};
+}
+
+function generateQuestion(){
+
+const type = random(1,3);
+
+if(type===1) return additionQuestion();
+if(type===2) return divisionQuestion();
+
+return perimeterQuestion();
+}
+
+for(let i=0;i<TOTAL_QUESTIONS;i++){
+questions.push(generateQuestion());
+}
+
+const questionEl=document.getElementById("question");
+const answersEl=document.getElementById("answers");
+const progressEl=document.getElementById("progress");
+const counterEl=document.getElementById("counter");
+const scoreEl=document.getElementById("scoreDisplay");
+const nextBtn=document.getElementById("nextBtn");
+
+function displayQuestion(){
+
+const q = questions[current];
+
+counterEl.textContent =
+`Question ${current+1}/${TOTAL_QUESTIONS}`;
+
+progressEl.style.width =
+((current)/TOTAL_QUESTIONS)*100+"%";
+
+questionEl.innerHTML=q.question;
+
+answersEl.innerHTML="";
+nextBtn.style.display="none";
+
+q.choices.forEach(choice=>{
+
+const btn=document.createElement("button");
+
+btn.className="answer";
+btn.textContent=choice;
+
+btn.onclick=()=>checkAnswer(btn,choice);
+
+answersEl.appendChild(btn);
+
+});
+}
+
+function checkAnswer(button, value){
+
+const q=questions[current];
+
+const allButtons =
+document.querySelectorAll(".answer");
+
+allButtons.forEach(b=>b.disabled=true);
+
+if(value===q.correct){
+
+button.classList.add("correct");
+score++;
+
+}else{
+
+button.classList.add("wrong");
+
+allButtons.forEach(b=>{
+
+if(Number(b.textContent)===q.correct){
+b.classList.add("correct");
+}
+
+});
+
+errors[q.type]++;
+
+}
+
+scoreEl.textContent=`Score : ${score}`;
+
+nextBtn.style.display="inline-block";
+}
+
+nextBtn.addEventListener("click",()=>{
+
+current++;
+
+if(current>=TOTAL_QUESTIONS){
+
+showResults();
+return;
+
+}
+
+displayQuestion();
+
+});
+
+function showResults(){
+
+document.getElementById("quiz").style.display="none";
+
+const percentage =
+Math.round(score/TOTAL_QUESTIONS*100);
+
+const note =
+((score/TOTAL_QUESTIONS)*20).toFixed(1);
+
+let diagnostics = "";
+
+if(errors.addition>0){
+
+diagnostics += `
+<div class="card">
+<h3>Additions</h3>
+<p>Des erreurs apparaissent dans les additions.</p>
+<ul>
+<li>Aligner les chiffres.</li>
+<li>Vérifier les retenues.</li>
+<li>Contrôler chaque colonne.</li>
+</ul>
+</div>`;
+}
+
+if(errors.division>0){
+
+diagnostics += `
+<div class="card">
+<h3>Partage équitable</h3>
+<ul>
+<li>Partager en parts égales.</li>
+<li>Utiliser la division.</li>
+<li>Vérifier le résultat par multiplication.</li>
+</ul>
+</div>`;
+}
+
+if(errors.perimeter>0){
+
+diagnostics += `
+<div class="card">
+<h3>Périmètre du rectangle</h3>
+<ul>
+<li>Formule : P = 2 × (L + l)</li>
+<li>Ne pas confondre périmètre et aire.</li>
+<li>Additionner tous les côtés.</li>
+</ul>
+</div>`;
+}
+
+if(diagnostics===""){
+
+diagnostics=`
+<div class="card">
+<h3>Excellent ! 🏆</h3>
+<p>Aucune notion à revoir.</p>
+</div>`;
+}
+
+const result=document.getElementById("result");
+
+result.style.display="block";
+
+result.innerHTML=`
+<h2>🐱 Bilan du Chaton Mathématicien</h2>
+
+<div class="score">
+${note}/20
+</div>
+
+<p><strong>${percentage}% de réussite</strong></p>
+
+<div class="card">
+Questions réussies : ${score}/${TOTAL_QUESTIONS}
+</div>
+
+<h2>Diagnostic</h2>
+
+${diagnostics}
+
+`;
+}
+
+displayQuestion();
+
+</script>
+
+</body>
+</html>

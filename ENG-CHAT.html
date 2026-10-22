@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Cat Academy 🐱</title>
+
+<style>
+:root{
+    --primary:#ff8fb1;
+    --secondary:#ffd166;
+    --success:#6bcf63;
+    --danger:#ff6b6b;
+    --bg:#fff9f4;
+    --card:#ffffff;
+    --text:#333;
+}
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:Segoe UI, Arial, sans-serif;
+}
+
+body{
+    background:linear-gradient(135deg,#eca623,#2e8f82);
+    min-height:100vh;
+    padding:20px;
+    color:var(--text);
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+}
+
+header{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+header h1{
+    font-size:2rem;
+}
+
+.cat{
+    font-size:3rem;
+}
+
+.card{
+    background:var(--card);
+    border-radius:20px;
+    padding:25px;
+    box-shadow:0 8px 24px rgba(0,0,0,.1);
+}
+
+.progress-box{
+    margin-bottom:20px;
+}
+
+.progress{
+    width:100%;
+    height:20px;
+    background:#eee;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.progress-bar{
+    height:100%;
+    width:0%;
+    background:linear-gradient(to right,var(--primary),var(--secondary));
+    transition:.3s;
+}
+
+.info{
+    display:flex;
+    justify-content:space-between;
+    margin:10px 0;
+    font-weight:bold;
+}
+
+.question-type{
+    display:inline-block;
+    background:#ffe7f0;
+    padding:6px 12px;
+    border-radius:999px;
+    margin-bottom:15px;
+    font-size:.9rem;
+}
+
+.question{
+    font-size:1.4rem;
+    margin-bottom:20px;
+    line-height:1.5;
+}
+
+.answers{
+    display:grid;
+    gap:12px;
+}
+
+.answer-btn{
+    padding:14px;
+    border:none;
+    border-radius:14px;
+    cursor:pointer;
+    background:#f4f4f4;
+    font-size:1rem;
+    transition:.2s;
+}
+
+.answer-btn:hover{
+    transform:scale(1.02);
+    background:#ececec;
+}
+
+.answer-btn.correct{
+    background:var(--success);
+    color:white;
+}
+
+.answer-btn.wrong{
+    background:var(--danger);
+    color:white;
+}
+
+.hidden{
+    display:none;
+}
+
+#nextBtn{
+    margin-top:20px;
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:14px;
+    background:var(--primary);
+    color:white;
+    font-size:1rem;
+    cursor:pointer;
+}
+
+.result{
+    line-height:1.8;
+}
+
+.result h2{
+    margin-bottom:15px;
+}
+
+.note{
+    font-size:2rem;
+    color:#ff6b9a;
+    font-weight:bold;
+}
+
+.reminder{
+    background:#fff5cb;
+    border-left:5px solid #ffd166;
+    border-radius:10px;
+    padding:15px;
+    margin-top:15px;
+}
+
+ul{
+    padding-left:22px;
+}
+
+.restart{
+    margin-top:20px;
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:12px;
+    background:#6bb8ff;
+    color:white;
+    cursor:pointer;
+    font-size:1rem;
+}
+
+@media(max-width:600px){
+    .question{
+        font-size:1.1rem;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+<div class="cat">🐱📚</div>
+<h1>English Cat Academy</h1>
+<p>Entraîne-toi avec les chatons professeurs !</p>
+</header>
+
+<div class="card" id="quizCard">
+
+<div class="progress-box">
+<div class="info">
+<span id="progressText">Question 1/20</span>
+<span id="scoreText">Score : 0</span>
+</div>
+<div class="progress">
+<div class="progress-bar" id="progressBar"></div>
+</div>
+</div>
+
+<div id="quizArea">
+<div class="question-type" id="questionType"></div>
+<div class="question" id="question"></div>
+<div class="answers" id="answers"></div>
+<button id="nextBtn" class="hidden">Question suivante 🐾</button>
+</div>
+
+<div id="resultArea" class="hidden result"></div>
+
+</div>
+</div>
+
+<script>
+
+const TOTAL_QUESTIONS = 20;
+
+let currentQuestion = 0;
+let score = 0;
+let questions = [];
+let answered = false;
+
+const mistakes = {
+    pronouns:0,
+    tobe:0,
+    colors:0
+};
+
+const pronounData = [
+    {text:"Sarah is my friend.", answer:"She"},
+    {text:"My brother is at school.", answer:"He"},
+    {text:"The cat is sleeping.", answer:"It"},
+    {text:"Tom and Jack are friends.", answer:"They"},
+    {text:"My sister and I are happy.", answer:"We"},
+    {text:"Emma is 11 years old.", answer:"She"},
+    {text:"The dog is black.", answer:"It"},
+    {text:"Paul is my cousin.", answer:"He"},
+    {text:"The boys are playing football.", answer:"They"},
+    {text:"My friends and I are students.", answer:"We"}
+];
+
+const pronouns = ["I","You","He","She","It","We","They"];
+
+const toBeData = [
+    {subject:"I", answer:"am"},
+    {subject:"She", answer:"is"},
+    {subject:"He", answer:"is"},
+    {subject:"It", answer:"is"},
+    {subject:"You", answer:"are"},
+    {subject:"We", answer:"are"},
+    {subject:"They", answer:"are"}
+];
+
+const colors = [
+    {fr:"Rouge", en:"Red"},
+    {fr:"Bleu", en:"Blue"},
+    {fr:"Vert", en:"Green"},
+    {fr:"Jaune", en:"Yellow"},
+    {fr:"Noir", en:"Black"},
+    {fr:"Blanc", en:"White"},
+    {fr:"Orange", en:"Orange"},
+    {fr:"Rose", en:"Pink"},
+    {fr:"Violet", en:"Purple"},
+    {fr:"Marron", en:"Brown"}
+];
+
+function shuffle(array){
+    const arr=[...array];
+    for(let i=arr.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+    return arr;
+}
+
+function getUniqueDistractors(correct,list,count){
+    const pool = list.filter(v=>v!==correct);
+    return shuffle(pool).slice(0,count);
+}
+
+function generatePronounQuestion(){
+
+    const item = pronounData[Math.floor(Math.random()*pronounData.length)];
+
+    let distractors = getUniqueDistractors(item.answer,pronouns,3);
+
+    return {
+        type:"Les pronoms",
+        category:"pronouns",
+        question:item.text + " ___",
+        correct:item.answer,
+        options:shuffle([item.answer,...distractors])
+    };
+}
+
+function generateBeQuestion(){
+
+    const item = toBeData[Math.floor(Math.random()*toBeData.length)];
+
+    const options = shuffle(["am","is","are","be"]);
+
+    return {
+        type:'Verbe "to be"',
+        category:"tobe",
+        question:item.subject + " ___ a student.",
+        correct:item.answer,
+        options
+    };
+}
+
+function generateColorQuestion(){
+
+    const item = colors[Math.floor(Math.random()*colors.length)];
+
+    let distractors = getUniqueDistractors(
+        item.en,
+        colors.map(c=>c.en),
+        3
+    );
+
+    return {
+        type:"Couleurs",
+        category:"colors",
+        question:'Traduis "' + item.fr + '" en anglais.',
+        correct:item.en,
+        options:shuffle([item.en,...distractors])
+    };
+}
+
+function generateQuestion(){
+
+    const generators = [
+        generatePronounQuestion,
+        generateBeQuestion,
+        generateColorQuestion
+    ];
+
+    return generators[
+        Math.floor(Math.random()*generators.length)
+    ]();
+}
+
+for(let i=0;i<TOTAL_QUESTIONS;i++){
+    questions.push(generateQuestion());
+}
+
+const questionEl = document.getElementById("question");
+const answersEl = document.getElementById("answers");
+const typeEl = document.getElementById("questionType");
+const nextBtn = document.getElementById("nextBtn");
+
+function updateProgress(){
+    document.getElementById("progressText").textContent =
+        "Question " + (currentQuestion+1) + "/" + TOTAL_QUESTIONS;
+
+    document.getElementById("scoreText").textContent =
+        "Score : " + score;
+
+    document.getElementById("progressBar").style.width =
+        ((currentQuestion)/TOTAL_QUESTIONS*100) + "%";
+}
+
+function displayQuestion(){
+
+    answered = false;
+    nextBtn.classList.add("hidden");
+
+    const q = questions[currentQuestion];
+
+    typeEl.textContent = q.type;
+    questionEl.textContent = q.question;
+
+    answersEl.innerHTML="";
+
+    q.options.forEach(option=>{
+
+        const btn = document.createElement("button");
+        btn.className="answer-btn";
+        btn.textContent=option;
+
+        btn.addEventListener("click",()=>selectAnswer(btn,option,q));
+
+        answersEl.appendChild(btn);
+    });
+
+    updateProgress();
+}
+
+function selectAnswer(button,choice,q){
+
+    if(answered) return;
+
+    answered=true;
+
+    const buttons = document.querySelectorAll(".answer-btn");
+
+    buttons.forEach(b=>{
+
+        if(b.textContent===q.correct){
+            b.classList.add("correct");
+        }
+
+        if(b===button && choice!==q.correct){
+            b.classList.add("wrong");
+        }
+
+        b.disabled=true;
+    });
+
+    if(choice===q.correct){
+        score++;
+    }else{
+        mistakes[q.category]++;
+    }
+
+    document.getElementById("scoreText").textContent =
+        "Score : " + score;
+
+    nextBtn.classList.remove("hidden");
+}
+
+nextBtn.addEventListener("click",()=>{
+
+    currentQuestion++;
+
+    if(currentQuestion>=TOTAL_QUESTIONS){
+        showResults();
+    }else{
+        displayQuestion();
+    }
+});
+
+function reminderBlock(title,text){
+    return `
+        <div class="reminder">
+            <strong>${title}</strong><br>
+            ${text}
+        </div>
+    `;
+}
+
+function showResults(){
+
+    document.getElementById("quizArea").classList.add("hidden");
+
+    const percentage = Math.round(
+        score/TOTAL_QUESTIONS*100
+    );
+
+    const note = (score/TOTAL_QUESTIONS*20).toFixed(1);
+
+    let diagnostics = "<ul>";
+
+    if(mistakes.pronouns>0){
+        diagnostics += "<li>Difficultés sur les pronoms personnels.</li>";
+    }
+
+    if(mistakes.tobe>0){
+        diagnostics += "<li>Difficultés sur le verbe To Be.</li>";
+    }
+
+    if(mistakes.colors>0){
+        diagnostics += "<li>Difficultés sur le vocabulaire des couleurs.</li>";
+    }
+
+    if(
+        mistakes.pronouns===0 &&
+        mistakes.tobe===0 &&
+        mistakes.colors===0
+    ){
+        diagnostics += "<li>Aucune difficulté détectée.</li>";
+    }
+
+    diagnostics += "</ul>";
+
+    let reminders = "";
+
+    if(mistakes.pronouns>0){
+        reminders += reminderBlock(
+            "Rappel : Pronoms",
+            "He = il, She = elle, It = cela/animal/objet, We = nous, They = ils/elles."
+        );
+    }
+
+    if(mistakes.tobe>0){
+        reminders += reminderBlock(
+            "Rappel : To Be",
+            "I am, You are, He/She/It is, We are, They are."
+        );
+    }
+
+    if(mistakes.colors>0){
+        reminders += reminderBlock(
+            "Rappel : Couleurs",
+            "Red = rouge, Blue = bleu, Green = vert, Yellow = jaune, Black = noir."
+        );
+    }
+
+    const resultArea = document.getElementById("resultArea");
+
+    resultArea.innerHTML = `
+        <h2>🏆 Bilan final</h2>
+
+        <p class="note">${note} / 20</p>
+
+        <p><strong>Réussite :</strong> ${percentage}%</p>
+
+        <h3>Diagnostic</h3>
+        ${diagnostics}
+
+        <h3>Fiches de rappel</h3>
+        ${reminders}
+
+        <button class="restart" onclick="location.reload()">
+            Rejouer 🐱
+        </button>
+    `;
+
+    resultArea.classList.remove("hidden");
+
+    document.getElementById("progressBar").style.width="100%";
+}
+
+displayQuestion();
+
+</script>
+
+</body>
+</html>

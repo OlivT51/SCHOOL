@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Académie des Chatons - Français 6e 🐱</title>
+
+<style>
+:root{
+    --primary:#ff7aa2;
+    --secondary:#ffd166;
+    --success:#4caf50;
+    --danger:#e53935;
+    --bg:#fff8fb;
+    --card:#ffffff;
+    --text:#333;
+}
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    font-family:Arial, Helvetica, sans-serif;
+    background:linear-gradient(180deg,#361bcf,#c9e238);
+    min-height:100vh;
+    color:var(--text);
+    display:flex;
+    justify-content:center;
+    padding:20px;
+}
+
+.container{
+    width:100%;
+    max-width:900px;
+}
+
+.card{
+    background:var(--card);
+    border-radius:20px;
+    padding:25px;
+    box-shadow:0 10px 30px rgba(0,0,0,.1);
+}
+
+h1{
+    text-align:center;
+    color:#ff5c8a;
+    margin-bottom:10px;
+}
+
+.subtitle{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.progress-container{
+    width:100%;
+    height:22px;
+    background:#eee;
+    border-radius:30px;
+    overflow:hidden;
+    margin-bottom:20px;
+}
+
+.progress-bar{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,#ff7aa2,#ffd166);
+    transition:.3s;
+}
+
+.top-info{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:15px;
+    font-weight:bold;
+}
+
+.question-type{
+    display:inline-block;
+    background:#ffe4ee;
+    color:#d81b60;
+    padding:6px 12px;
+    border-radius:20px;
+    margin-bottom:15px;
+    font-size:14px;
+}
+
+.question{
+    font-size:1.35rem;
+    margin-bottom:20px;
+    line-height:1.5;
+}
+
+.options{
+    display:grid;
+    gap:12px;
+}
+
+.option{
+    border:none;
+    border-radius:14px;
+    padding:15px;
+    cursor:pointer;
+    font-size:1rem;
+    background:#f7f7f7;
+    transition:.2s;
+}
+
+.option:hover{
+    background:#ffe8f2;
+}
+
+.correct{
+    background:#c8f7d0 !important;
+}
+
+.wrong{
+    background:#ffd0d0 !important;
+}
+
+.nextBtn{
+    margin-top:20px;
+    width:100%;
+    border:none;
+    padding:14px;
+    border-radius:14px;
+    background:var(--primary);
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+    display:none;
+}
+
+.result{
+    display:none;
+}
+
+.result h2{
+    color:#ff5c8a;
+    margin-bottom:15px;
+}
+
+.score{
+    font-size:1.5rem;
+    margin-bottom:15px;
+}
+
+.report{
+    margin-top:15px;
+    background:#fff7dc;
+    padding:15px;
+    border-radius:15px;
+}
+
+.lesson{
+    margin-top:15px;
+    background:#eef8ff;
+    padding:15px;
+    border-radius:15px;
+}
+
+.restart{
+    margin-top:20px;
+    padding:14px;
+    border:none;
+    width:100%;
+    background:#4caf50;
+    color:white;
+    border-radius:14px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.cat{
+    font-size:2rem;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="card" id="quizCard">
+
+    <h1>🐱 Académie des Chatons</h1>
+    <p class="subtitle">Entraînement Français 6e</p>
+
+    <div class="top-info">
+        <span id="progressText">Question 1/20</span>
+        <span>Score : <span id="score">0</span></span>
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div id="quizZone"></div>
+
+    <button class="nextBtn" id="nextBtn">
+        Question suivante 🐾
+    </button>
+</div>
+
+<div class="card result" id="resultScreen"></div>
+
+</div>
+
+<script>
+
+const TOTAL_QUESTIONS = 20;
+
+const stats = {
+    sujet: {good:0,bad:0},
+    present: {good:0,bad:0},
+    synonyme: {good:0,bad:0},
+    aoua: {good:0,bad:0}
+};
+
+let currentQuestion = 0;
+let score = 0;
+let questions = [];
+
+function shuffle(arr){
+    return [...arr].sort(()=>Math.random()-0.5);
+}
+
+function uniqueChoices(correct,distractors){
+    let set = new Set([correct]);
+
+    while(set.size < 4){
+        set.add(
+            distractors[Math.floor(Math.random()*distractors.length)]
+        );
+    }
+
+    return shuffle([...set]);
+}
+
+/* =========================
+   SUJET
+========================= */
+
+function subjectQuestion(){
+
+    const sentences = [
+        ["Léa se réveille tôt.","Léa"],
+        ["Les oiseaux chantent dans le jardin.","Les oiseaux"],
+        ["Le chaton dort sur le canapé.","Le chaton"],
+        ["Tom ouvre la fenêtre.","Tom"],
+        ["Les enfants jouent dehors.","Les enfants"],
+        ["Nous observons le soleil.","Nous"]
+    ];
+
+    const chosen =
+        sentences[Math.floor(Math.random()*sentences.length)];
+
+    const subjects =
+        ["Léa","Tom","Le chaton","Les enfants","Nous","Les oiseaux"];
+
+    return {
+        type:"sujet",
+        title:"Sujet de la phrase",
+        question:"Quel est le sujet dans : <br><br><strong>"+chosen[0]+"</strong>",
+        answer:chosen[1],
+        options:uniqueChoices(chosen[1],subjects)
+    };
+}
+
+/* =========================
+   PRESENT
+========================= */
+
+function presentQuestion(){
+
+    const items = [
+        ["Nous","observer","observons"],
+        ["Tu","ouvrir","ouvres"],
+        ["Je","chanter","chante"],
+        ["Ils","jouer","jouent"],
+        ["Vous","regarder","regardez"],
+        ["Nous","écouter","écoutons"],
+        ["Je","aimer","aime"]
+    ];
+
+    const x = items[Math.floor(Math.random()*items.length)];
+
+    const correct = x[2];
+
+    const distractors = [
+        x[1],
+        correct+"s",
+        correct.slice(0,-1),
+        x[1]+"e",
+        x[1]+"ons",
+        x[1]+"ent"
+    ];
+
+    return {
+        type:"present",
+        title:"Présent de l'indicatif",
+        question:`Complète : <br><br><strong>${x[0]} (${x[1]}) ...</strong>`,
+        answer:correct,
+        options:uniqueChoices(correct,distractors)
+    };
+}
+
+/* =========================
+   SYNONYMES
+========================= */
+
+function synonymQuestion(){
+
+    const data = [
+        ["observer","regarder"],
+        ["belle","jolie"],
+        ["chanter","fredonner"],
+        ["maison","habitation"],
+        ["rapide","vite"],
+        ["heureux","content"],
+        ["commencer","débuter"]
+    ];
+
+    const x = data[Math.floor(Math.random()*data.length)];
+
+    const bank = [
+        "regarder",
+        "jolie",
+        "fredonner",
+        "habitation",
+        "vite",
+        "content",
+        "débuter",
+        "marcher",
+        "grand",
+        "courir",
+        "ouvrir",
+        "parler"
+    ];
+
+    return {
+        type:"synonyme",
+        title:"Synonymes",
+        question:`Quel est un synonyme de <strong>${x[0]}</strong> ?`,
+        answer:x[1],
+        options:uniqueChoices(x[1],bank)
+    };
+}
+
+/* =========================
+   A ou À
+========================= */
+
+function aQuestion(){
+
+    const data = [
+        ["Léa ___ ouvert sa fenêtre.","a"],
+        ["Elle va ___ l'école.","à"],
+        ["Le soleil ___ brillé toute la journée.","a"],
+        ["Tom va ___ la piscine.","à"],
+        ["Le chat ___ faim.","a"],
+        ["Nous allons ___ Paris.","à"]
+    ];
+
+    const x =
+        data[Math.floor(Math.random()*data.length)];
+
+    return {
+        type:"aoua",
+        title:"a ou à",
+        question:x[0],
+        answer:x[1],
+        options:shuffle([
+            x[1],
+            x[1]==="a" ? "à" : "a",
+            "à",
+            "A"
+        ])
+    };
+}
+
+function createQuestion(){
+
+    const generators = [
+        subjectQuestion,
+        presentQuestion,
+        synonymQuestion,
+        aQuestion
+    ];
+
+    return generators[
+        Math.floor(Math.random()*generators.length)
+    ]();
+}
+
+/* Génère 20 questions */
+for(let i=0;i<TOTAL_QUESTIONS;i++){
+    questions.push(createQuestion());
+}
+
+const quizZone = document.getElementById("quizZone");
+const scoreDisplay = document.getElementById("score");
+const progressBar = document.getElementById("progressBar");
+const progressText = document.getElementById("progressText");
+
+function updateProgress(){
+
+    progressText.textContent =
+    `Question ${currentQuestion+1}/${TOTAL_QUESTIONS}`;
+
+    progressBar.style.width =
+    ((currentQuestion)/TOTAL_QUESTIONS)*100+"%";
+}
+
+function displayQuestion(){
+
+    updateProgress();
+
+    const q = questions[currentQuestion];
+
+    quizZone.innerHTML = `
+        <div class="question-type">${q.title}</div>
+        <div class="question">${q.question}</div>
+        <div class="options">
+            ${q.options.map(opt =>
+                `<button class="option">${opt}</button>`
+            ).join("")}
+        </div>
+    `;
+
+    const buttons =
+    document.querySelectorAll(".option");
+
+    buttons.forEach(btn=>{
+
+        btn.addEventListener("click",()=>{
+
+            buttons.forEach(b=>b.disabled=true);
+
+            const answer = btn.textContent;
+
+            const correctButton =
+            [...buttons].find(
+                b=>b.textContent===q.answer
+            );
+
+            if(answer===q.answer){
+
+                btn.classList.add("correct");
+                score++;
+
+                stats[q.type].good++;
+
+            }else{
+
+                btn.classList.add("wrong");
+
+                if(correctButton)
+                correctButton.classList.add("correct");
+
+                stats[q.type].bad++;
+            }
+
+            scoreDisplay.textContent = score;
+
+            document
+            .getElementById("nextBtn")
+            .style.display="block";
+        });
+    });
+}
+
+document
+.getElementById("nextBtn")
+.addEventListener("click",()=>{
+
+    currentQuestion++;
+
+    this.style;
+
+    if(currentQuestion>=TOTAL_QUESTIONS){
+
+        showResults();
+        return;
+    }
+
+    document
+      .getElementById("nextBtn")
+      .style.display="none";
+
+    displayQuestion();
+});
+
+function lessonHelp(){
+
+    let tips = [];
+
+    if(stats.sujet.bad>1){
+        tips.push(
+          "✅ Sujet : le sujet indique qui fait l'action."
+        );
+    }
+
+    if(stats.present.bad>1){
+        tips.push(
+          "✅ Présent : vérifie la terminaison selon le pronom."
+        );
+    }
+
+    if(stats.synonyme.bad>1){
+        tips.push(
+          "✅ Synonymes : un synonyme a un sens proche."
+        );
+    }
+
+    if(stats.aoua.bad>1){
+        tips.push(
+          "✅ a = verbe avoir ; à = préposition."
+        );
+    }
+
+    if(tips.length===0){
+        tips.push(
+          "🏆 Excellent travail ! Toutes les notions semblent maîtrisées."
+        );
+    }
+
+    return tips.join("<br><br>");
+}
+
+function diagnostic(){
+
+    let lines=[];
+
+    for(const key in stats){
+
+        const item=stats[key];
+
+        if(item.bad>item.good){
+
+            const labels={
+                sujet:"Identification du sujet",
+                present:"Présent de l'indicatif",
+                synonyme:"Synonymes",
+                aoua:"a ou à"
+            };
+
+            lines.push(
+                "⚠ Difficulté sur : " + labels[key]
+            );
+        }
+    }
+
+    if(lines.length===0){
+        lines.push(
+            "✅ Aucune difficulté majeure détectée."
+        );
+    }
+
+    return lines.join("<br>");
+}
+
+function showResults(){
+
+    progressBar.style.width="100%";
+
+    document
+      .getElementById("quizCard")
+      .style.display="none";
+
+    const percent =
+      Math.round((score/TOTAL_QUESTIONS)*100);
+
+    const note =
+      ((score/TOTAL_QUESTIONS)*20)
+      .toFixed(1);
+
+    const result =
+    document.getElementById("resultScreen");
+
+    result.style.display="block";
+
+    result.innerHTML = `
+        <h2>🐱 Bilan du Chaton</h2>
+
+        <div class="score">
+            Note : ${note}/20
+            <br>
+            Réussite : ${percent}%
+        </div>
+
+        <div class="report">
+            <h3>Diagnostic</h3>
+            <br>
+            ${diagnostic()}
+        </div>
+
+        <div class="lesson">
+            <h3>Fiches de rappel</h3>
+            <br>
+            ${lessonHelp()}
+        </div>
+
+        <button class="restart"
+            onclick="location.reload()">
+            Rejouer 🐾
+        </button>
+    `;
+}
+
+displayQuestion();
+
+</script>
+
+</body>
+</html>
